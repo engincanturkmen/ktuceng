@@ -1,0 +1,119 @@
+import re
+class Polynomial:
+    def __init__(self,val):
+        if type(val) == type([]):
+            self.plist = val
+        elif type(val) == type(''):
+            self.plist = parse_string(val)
+        else:
+            raise "Tanimsiz polinom parametresi: %s" % val
+        return
+    def __add__(self,other): return Polynomial(add(self.plist,plist(other)))
+    def __radd__(self,other): return Polynomial(add(self.plist,plist(other)))
+    def __sub__(self,other):  return Polynomial(sub(self.plist,plist(other)))
+    def __rsub__(self,other): return -Polynomial(sub(self.plist,plist(other)))
+    def __neg__(self): return -1*self
+    def __str__(self): return tostring(self.plist)
+def plist(term):
+    try:
+        pl = term.plist
+        return pl
+    except:
+        pass
+    if type(term) == type(1.0) or type(term) == type(1):
+        return [term]
+    elif type(term) == type(''):
+        return parse_string(term)
+    else:
+        raise "Desteklenmeyen herhangi bir terim plistesine yazılamaz: %s" % term
+    return None
+def add(p1,p2):
+    if len(p1) > len(p2):
+        new = [i for i in p1]
+        for i in range(len(p2)): new[i] += p2[i]
+    else:
+        new = [i for i in p2]
+        for i in range(len(p1)): new[i] += p1[i]
+    return new
+def sub(p1,p2): return add(p1,mult_const(p2,-1))
+def mult_const(p,c):
+    return [c*pi for pi in p]
+def parse_string(str=None):
+    termpat = re.compile('([-+]?\s*\d*\.?\d*)(x?\^?\d?)')
+    res_dict = {}
+    for n,p in termpat.findall(str):
+        n,p = n.strip(),p.strip()
+        if not n and not p: continue
+        n,p = parse_n(n),parse_p(p)
+        if p in res_dict: res_dict[p] += n
+        else: res_dict[p] = n
+    highest_order = max(res_dict.keys())
+    res = [0]*(highest_order+1)
+    for key,value in res_dict.items(): res[key] = value
+    return res
+def parse_n(str):
+    if not str: return 1
+    elif str == '-': return -1
+    elif str == '+': return 1
+    return eval(str)
+def parse_p(str):
+    pat = re.compile('x\^?(\d)?')
+    if not str: return 0
+    res = pat.findall(str)[0]
+    if not res: return 1
+    return int(res)
+def strip_leading_zeros(p):
+    for i in range(len(p)-1,-1,-1):
+        if p[i]: break
+    return p[:i+1]
+def tostring(p):
+    p = strip_leading_zeros(p)
+    str = []
+    for i in range(len(p)-1,-1,-1):
+        if p[i]:
+            if i < len(p)-1:
+                if p[i] >= 0: str.append('+')
+                else: str.append('-')
+                str.append(tostring_term(abs(p[i]),i))
+            else:
+                str.append(tostring_term(p[i],i))
+    return ' '.join(str)
+def tostring_term(c,i): 
+    if i == 1:
+        if c == 1: return 'x'
+        elif c == -1: return '-x'
+        return "%sx" % c
+    elif i: 
+        if c == 1: return "x^%d" % i
+        elif c == -1: return "-x^%d" % i
+        return "%sx^%d" % (c,i)
+    return "%s" % c
+def menu():
+    print("Polinomla toplam ve fark islemleri")
+    print("Toplama islemi icin t ye basiniz")
+    print("Cikarma islemi icin c ye basiniz")
+    print("Cikmak icin q ya basiniz")       
+cmdList=['t','c']
+def test():
+    while True:
+            menu()
+            ch = input("islem turunu sec:")
+            if ch in cmdList:
+                if ch == 't':
+                    exp1 = str(input("birinci polinomu giriniz: "))
+                    exp2 = str(input("ikinci polinomu giriniz: "))
+                    parse_exp1=parse_string(exp1)
+                    parse_exp2=parse_string(exp2)
+                    print("toplam",Polynomial(parse_exp1)+Polynomial(parse_exp2))
+                elif ch == 'c':
+                    exp1 = str(input("birinci polinomu giriniz: "))
+                    exp2 = str(input("ikinci polinomu giriniz: "))
+                    parse_exp1=parse_string(exp1)
+                    parse_exp2=parse_string(exp2)
+                    print("fark",Polynomial(parse_exp1)-Polynomial(parse_exp2))
+               
+            elif ch == 'q':
+                    break    
+            else:
+                print("Yanlis girdi!")
+if __name__ == '__main__': test()
